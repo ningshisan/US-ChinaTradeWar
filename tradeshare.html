@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Percentage of Import and Export over Provincial GDP of China (2016) </title>
+<style>
+body {
+  position:relative;
+  width:1000px;
+  margin:auto;
+}
+.arc text,.arc_trade text {
+  font: 10px sans-serif;
+  text-anchor: middle;
+}
+
+.arc path,.arc_trade path {
+  stroke: #fff;
+}
+
+.arc_trade text {
+  font: 12px sans-serif;
+  font-weight：600;
+}
+
+</style>
+<div style="position:absolute;left:200px;top:30px">
+  <h3>Percentage of Import and Export over Provincial GDP of China (2016)</h3>
+  <h6>In 2016 US Dollars</h6>
+</div>
+<svg width="1000" height="1000">
+  
+</svg>
+<script src="https://d3js.org/d3.v4.min.js"></script>
+<script>
+
+var svg = d3.select("svg"),
+    width = +svg.attr("width")-100,
+    height = +svg.attr("height")-100,
+    radius = Math.min(width, height) / 2,
+    g = svg.append("g").attr("transform", "translate(" + (width+100) / 2 + "," + (height+100) / 2 + ")");
+
+// define chinese abbreviation for each province
+prov_abbr = ['北京','天津','河北','山西','内蒙','辽宁','吉林','黑龙江','上海','江苏','浙江','安徽','福建',	'江西',	'山东',	'河南',
+             '湖北','湖南',	'广东',	'广西',	'河南',	'重庆',	'四川',	'贵州',	'云南',	'西藏',	'陕西',	'甘肃',	'青海',	'宁夏',	'新疆'];
+var prov = d3.map(); 
+
+var pie = d3.pie()
+    .sort(null)
+    .startAngle(-Math.PI/2)
+    .padAngle(0.001)
+    .value(function(d) { return 1; });
+
+var path = d3.arc()
+    .outerRadius(function(d,i){return Math.sqrt(d.data.gdp)/Math.sqrt(1218)*(radius-60)+60;})
+    .innerRadius(5);
+//
+var path_trade = d3.arc()
+                   .outerRadius(function(d,i){
+                      return Math.sqrt(d.data.gdp)/Math.sqrt(1218)*(radius-60)+60;
+                    })
+                   .innerRadius(function(d,i){
+                      return (1-d.data.share)*(Math.sqrt(d.data.gdp)/Math.sqrt(1218)*(radius-60)+60);
+                    });
+                   
+var label = d3.arc()
+    .outerRadius(function(d,i){return Math.sqrt(d.data.gdp)/Math.sqrt(1218)*(radius-60)+60;})
+    .innerRadius(5);
+    
+var label_prov = d3.arc()
+                  .innerRadius(function(d,i){return Math.sqrt(d.data.gdp)/Math.sqrt(1218)*(radius-60)+80;})
+                  .outerRadius(function(d,i){return Math.sqrt(d.data.gdp)/Math.sqrt(1218)*(radius-60)+60;});
+    
+var xdata = []; 
+d3.csv("GDP_Trade_China_2016.csv", function(d,i) {
+  d.share = +d.share;
+  d.gdp   = +d.gdp;
+  prov.set(d.province,prov_abbr[i]); 
+  return d;
+}, function(error, data) {
+
+  if (error) throw error;
+  data.sort(function(d,e){
+    return -d.gdp + e.gdp;
+  });
+  // add reference lines
+  g.selectAll(".ref")
+   .data([200,500,1000])
+   .enter().append("circle")
+   .attr("r",function(d){return Math.sqrt(d)/Math.sqrt(1218)*radius;})
+   .style("stroke","#eee")
+   .style("stroke-width","2px")
+   .style("fill","none");
+  g.selectAll(".ref_label")
+   .data([200,500,1000])
+   .enter().append("text")
+   .attr("x",function(d){return -Math.sqrt(d)/Math.sqrt(1218)*radius-10;})
+   .style("text-anchor","end")
+   .style("stroke","#aaa")
+   .style("fill","#aaa")
+   .attr("dy","1em")
+   .text(function(d){return d+"B";});
+  
+  
+  xdata = data;
+  var arc = g.selectAll(".arc")
+    .data(pie(data))
+    .enter().append("g")
+      .attr("class", "arc");
+
+  arc.append("path")
+      .attr("d", path)
+      .attr("fill", function(d) { return "#42A8E1";}); //color(d.data.province); });
+  
+  var arc_trade = g.selectAll(".arc_trade")
+                   .data(pie(data))
+                   .enter().append("g")
+                   .attr("class","arc_trade");
+                   
+  arc_trade.append("path")
+     .attr("d",path_trade)
+     .style("fill","gold"); 
+  
+  arc.append("text")
+      .attr("transform", function(d) { return "translate(" + label.centroid(d) + ")"; })
+      .attr("dy", "0.35em")
+      .text(function(d) { return d.data.gdp+"B"; });
+  arc_trade.append("text")
+     .attr("transform", function(d) { return "translate(" + label_prov.centroid(d) + ")"; })
+     .attr("dy", "0.35em")
+     .attr("dx","-0.35em")
+     .style("text-anchor","start")
+     .text(function(d,i) { return prov.get(d.data.province); });
+      
+  
+});
+
+</script>
