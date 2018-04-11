@@ -70,7 +70,7 @@ var label_prov = d3.arc()
                   .outerRadius(function(d,i){return Math.sqrt(d.data.gdp)/Math.sqrt(1218)*(radius-60)+60;});
     
 var xdata = []; 
-d3.csv("GDP_Trade_China_2016.csv", function(d,i) {
+d3.csv("./data/GDP_Trade_China_2016.csv", function(d,i) {
   d.share = +d.share;
   d.gdp   = +d.gdp;
   prov.set(d.province,prov_abbr[i]); 
