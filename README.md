@@ -18,4 +18,9 @@ Represent the polar arc tradeshare.html by hexagon China Map. The map is modifie
 
 Data source and item are the same as in the tradeshare.html 
 
+#trade_hexagon_china.html
+extend trade_hexagon to include more years' data. 
+
+
+
 			 

@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Percentage of Import and Export over Provincial GDP of China (2016) </title>
+<style>
+body {
+  position:relative;
+  width:1000px;
+  margin:auto;
+}
+
+.prov .trade path {
+    fill: "gold"; 
+}
+
+</style>
+<div style="width:840px">
+ 
+    <h3 style="margin:auto"> China Provincial Trade (Import + Export) Value in <span id="year"> 2016</span></h3>
+    <h6>In current year US dollars (B = Billions)</h6>
+    <p ><input style="width:500px" type="range" min=1993 max=2016 value=2016 id="yearslider"> </input></p>   
+<svg width="830" height="580">
+    
+<rect x="650px" y="400px" width="140px" height="180px" style="stroke:#eee;fill:white"></rect>
+
+</svg>
+</div>
+<script src="https://d3js.org/d3.v4.min.js"></script>
+<script src="https://d3js.org/d3-color.v1.min.js"></script>
+<script src="https://d3js.org/d3-interpolate.v1.min.js"></script>
+<script src="https://d3js.org/d3-scale-chromatic.v1.min.js"></script>
+<script>
+   
+      
+    var color = d3.scaleThreshold()
+    .domain([1,10,100,500,1000])
+    .range(d3.schemeYlOrRd[6]);
+    
+    var svg = d3.select("svg");
+    var width  = +svg.attr("width")-30,
+        height = +svg.attr("height")-30;
+    
+    var hexar  = width/height>18.2/12.5?Math.floor(height/12.5):Math.floor(width/18.2);  
+    
+    var pathstr = makehexagon(hexar);
+    
+    function makehexagon(hexa_r) {
+        var theta = Math.PI/6;  
+        var mx      = hexa_r*Math.cos(theta),pathstr='M ';
+        // generate path for hexagon with radiu of r
+        pathstr = pathstr.concat([-mx,-hexa_r/2]);
+        pathstr = pathstr.concat('L');
+        pathstr = pathstr.concat([0,-hexa_r]);
+        pathstr = pathstr.concat('L');
+        pathstr = pathstr.concat([mx,-hexa_r/2]);
+        pathstr = pathstr.concat('L');
+        pathstr = pathstr.concat([mx,hexa_r/2]);
+        pathstr = pathstr.concat('L');
+        pathstr = pathstr.concat([0,hexa_r]);
+        pathstr = pathstr.concat('L');
+        pathstr = pathstr.concat([-mx,hexa_r/2]);
+        pathstr = pathstr.concat('L');
+        pathstr = pathstr.concat([-mx,-hexa_r/2]);
+        pathstr = pathstr.concat("Z"); 
+        return pathstr;
+    }
+     //draw legend
+     
+    var legend = d3.select("svg").selectAll(".legend")
+      .data([0,1,2,3,4,5])
+      .enter()
+      .append("g")
+      .attr("class","legend")
+      .attr("transform","translate(670,420)");
+     
+     legend.append("rect")
+      .attr("x","0px")
+      .attr("y",function(d){
+        return (20*d)+"px"; 
+      })
+      .attr("width","40px")
+      .attr("height","20px")
+      .style("fill",function(d,i){
+        return d==0?color(0):d==1?color(2):d==2?color(50):d==3?color(200):d==4?color(700):color(1200);
+       });
+      
+     legend.append("text")
+           .attr("x","50px")
+           .attr("y",function(d){
+            return (20*d+15)+"px";
+           })
+           .style("stroke","black")
+           .style("font-size","16px")
+           .text(function(d,i){
+            return d==0?"0 - 1B":d==1?"1 - 10B":d==2?"10 - 100B":d==3?"100 - 500B":d==4?"500 - 1,000B":"1,000B above"; 
+           });
+           
+    // -26,-15L 0,-30 L  26,-15 L  26,15 L  0,30 L -26,15L -26,-15Z"
+    var xdata = [];
+    var prov_abbr = ['京','津','冀','晋','蒙','辽','吉','黑','沪','苏','浙','皖','闽',	'赣','鲁','豫','鄂','湘','粤',	'桂','琼','渝','川',	'贵','滇','藏','陕',	'甘','青','宁','新'];
+   // update input
+   d3.select("#yearslider").on("input", function() {
+    var yr = this.value;
+    d3.select("#year").text(yr);
+    var field = 'y'+yr;
+    d3.selectAll(".provinces")
+      .style("fill",function(d){
+       return color(d[field]);
+      }); 
+});
+   
+    var prov = d3.map(); 
+    d3.queue()
+      .defer(d3.csv,'GDP_Trade_China_2016.csv',function(d,i){ d.share = +d.share; d.row   = +d.row;d.col   = +d.col;prov.set(d.province,prov_abbr[i]);return d;})
+      .await(ready);
+    
+function ready(error,data){
+    if (error) throw error;
+        xdata = data;
+
+        //draw hexagon china map
+ 
+ 
+ 
+ var g = svg.selectAll(".prov")
+    .data(xdata)
+    .enter().append("g")
+    .attr("transform","translate(15,15)")
+    .attr("class","prov");
+
+ g.append("path")
+  .attr("transform",function(d){
+        var mx = hexar*Math.cos(Math.PI/6);
+        var tx = d.row%2==1?mx+2*(d.col-1)*mx:2*mx*d.col,
+            ty = hexar+1.5*(d.row-1)*hexar;
+        return "translate("+tx+","+ty+")";          
+    })
+    .attr("class","provinces")
+    .attr("d",pathstr)
+    .style("stroke","#fff")
+    .style("fill",function(d){
+      return color(d.y2016);
+     });
+    
+ 
+    
+ g.append('text')
+    .attr("transform",function(d){
+        var mx = hexar*Math.cos(Math.PI/6);
+        var tx = d.row%2==1?mx+2*(d.col-1)*mx:2*mx*d.col,
+            ty = hexar+1.5*(d.row-1)*hexar;
+        return "translate("+tx+","+ty+")";          
+    })
+    .attr("x","0px")
+    .attr("y","-2em")
+    .attr("dy","0.35em")
+    .style('text-anchor',"middle")
+    .style("font-size","12px")
+    .style("stroke","black")
+    .text(function(d){return prov.get(d.province);});       
+ }
+        
+</script>
